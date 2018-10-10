@@ -1,110 +1,114 @@
-/**
- * Created by Peter Sbarski
- * Serverless Architectures on AWS
- * http://book.acloud.guru/
- * Last Updated: Feb 11, 2017
- */
-
-
 var userController = {
   data: {
-    auth0Lock: null,
-    config: null
+      auth0Lock: null,
+      config: null
   },
   uiElements: {
-    loginButton: null,
-    logoutButton: null,
-    profileButton: null,
-    profileNameLabel: null,
-    profileImage: null
+      loginButton: null,
+      logoutButton: null,
+      profileButton: null,
+      profileNameLabel: null,
+      profileImage: null
   },
-  init: function(config) {
-    var that = this;
+  init: function (config) {
 
-    console.log('here');
-    this.uiElements.loginButton = $('#auth0-login');
-    this.uiElements.logoutButton = $('#auth0-logout');
-    this.uiElements.profileButton = $('#user-profile');
-    this.uiElements.profileNameLabel = $('#profilename');
-    this.uiElements.profileImage = $('#profilepicture');
+      var that = this;
 
-    this.data.config = config;
-    this.data.auth0Lock = new Auth0Lock(config.auth0.clientId, config.auth0.domain);
+      this.uiElements.loginButton = $('#auth0-login');
+      this.uiElements.logoutButton = $('#auth0-logout');
+      this.uiElements.profileButton = $('#user-profile');
+      this.uiElements.profileNameLabel = $('#profilename');
+      this.uiElements.profileImage = $('#profilepicture');
 
-    var idToken = localStorage.getItem('userToken');
+      this.data.config = config;
 
-    if (idToken) {
-      this.configureAuthenticatedRequests();
-      this.data.auth0Lock.getProfile(idToken, function(err, profile) {
-        if (err) {
-          return alert('There was an error getting the profile: ' + err.message);
-        }
-        that.showUserAuthenticationDetails(profile);
+      this.data.auth0Lock = new Auth0Lock(config.auth0.clientId, config.auth0.domain, {
+          auth: {
+      responseType: 'id_token token',
+              params: {
+                  scope: config.auth0.scope,
+        audience: config.auth0.audience,
+        redirectUrl: "",
+        responseType: "token"
+              }
+          }
+      }); // params set in config.js
+      this.data.auth0Lock.on("authenticated", function (authResult) {
+          console.log("authenticated: ", authResult);
+          that.retrieveProfileData(authResult.accessToken);
+          localStorage.setItem('userToken', authResult.accessToken);
       });
-    }
 
-    this.wireEvents();
-  },
-  configureAuthenticatedRequests: function() {
-    $.ajaxSetup({
-      'beforeSend': function(xhr) {
-        xhr.setRequestHeader('Authorization', 'Bearer ' + localStorage.getItem('userToken'));
+      var idToken = localStorage.getItem('userToken');
+
+      if (idToken) {
+          this.retrieveProfileData(idToken);
       }
-    });
+      this.wireEvents();
   },
-  showUserAuthenticationDetails: function(profile) {
-    var showAuthenticationElements = !!profile;
+  retrieveProfileData: function (accessToken) {
+  
+  console.log("retrieveProfileData: ", accessToken);
+  
+      var that = this;
 
-    if (showAuthenticationElements) {
-      this.uiElements.profileNameLabel.text(profile.nickname);
-      this.uiElements.profileImage.attr('src', profile.picture);
-    }
-
-    this.uiElements.loginButton.toggle(!showAuthenticationElements);
-    this.uiElements.logoutButton.toggle(showAuthenticationElements);
-    this.uiElements.profileButton.toggle(showAuthenticationElements);
-  },
-  wireEvents: function() {
-    var that = this;
-
-    this.uiElements.loginButton.click(function(e) {
-      console.log('clicked login')
-      var params = {
-        authParams: {
-          scope: 'openid email user_metadata picture'
-        }
-      };
-
-      that.data.auth0Lock.show(params, function(err, profile, token) {
-        if (err) {
-          // Error callback
-          alert('There was an error');
-          console.log(err)
-        } else {
-          // Save the JWT token.
-          localStorage.setItem('userToken', token);
-          that.configureAuthenticatedRequests();
+      console.log("retrieving profile");
+      this.configureAuthenticatedRequests();
+      this.data.auth0Lock.getUserInfo(accessToken, function (err, profile) {
+          if (err) {
+              return alert('There was an error getting the profile: ' + err.message);
+          }
           that.showUserAuthenticationDetails(profile);
-        }
       });
-    });
+  },
+  configureAuthenticatedRequests: function () {
+      $.ajaxSetup({
+          'beforeSend': function (xhr) {
+      
+      var token = localStorage.getItem('userToken');
+      console.log("sending request with token: " + token);
+              xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+          }
+      });
+  },
+  showUserAuthenticationDetails: function (profile) {
 
-    this.uiElements.logoutButton.click(function(e) {
-      localStorage.removeItem('userToken');
+  console.log("showUserAuthenticationDetails: ", profile);
+  
+      var showAuthenticationElements = !!profile; //coerce into a boolean (!!1 evalutes to true, !!0 evalutes to false)
 
-      that.uiElements.logoutButton.hide();
-      that.uiElements.profileButton.hide();
-      that.uiElements.loginButton.show();
-    });
+      if (showAuthenticationElements) {
+          this.uiElements.profileNameLabel.text(profile.nickname);
+          this.uiElements.profileImage.attr('src', profile.picture);
+      }
+      this.uiElements.loginButton.toggle(!showAuthenticationElements);
+      this.uiElements.logoutButton.toggle(showAuthenticationElements);
+      this.uiElements.profileButton.toggle(showAuthenticationElements);
+  },
+  wireEvents: function () {
 
-    this.uiElements.profileButton.click(function(e) {
-      var url = that.data.config.apiBaseUrl + '/user-profile';
+      var that = this;
 
-      $.get(url, function(data, status) {
-        $('#user-profile-raw-json').text(JSON.stringify(data, null, 2));
-        $('#user-profile-modal').modal();
-      })
-    });
+      this.uiElements.loginButton.click(function (e) {
+          console.log("show");
+          that.data.auth0Lock.show();
+      });
+      this.uiElements.logoutButton.click(function (e) {
+
+          localStorage.removeItem('userToken');
+
+          that.uiElements.logoutButton.hide();
+          that.uiElements.profileButton.hide();
+          that.uiElements.loginButton.show();
+      });
+      this.uiElements.profileButton.click(function (e) {
+
+          var url = that.data.config.apiBaseUrl + '/user-profile';
+
+          $.get(url, function (data, status) {
+              $('#user-profile-raw-json').text(JSON.stringify(data, null, 2));
+              $('#user-profile-modal').modal();
+          })
+      });
   }
 }
-
