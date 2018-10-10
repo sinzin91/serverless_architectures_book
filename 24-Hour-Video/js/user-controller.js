@@ -23,15 +23,15 @@ var userController = {
       this.data.config = config;
 
       this.data.auth0Lock = new Auth0Lock(config.auth0.clientId, config.auth0.domain, {
-          auth: {
-      responseType: 'id_token token',
-              params: {
-                  scope: config.auth0.scope,
-        audience: config.auth0.audience,
-        redirectUrl: "",
-        responseType: "token"
-              }
+        auth: {
+          responseType: 'id_token token',
+          params: {
+            scope: config.auth0.scope,
+            audience: config.auth0.audience,
+            redirectUrl: "",
+            responseType: "token"
           }
+        }
       }); // params set in config.js
       this.data.auth0Lock.on("authenticated", function (authResult) {
           console.log("authenticated: ", authResult);
