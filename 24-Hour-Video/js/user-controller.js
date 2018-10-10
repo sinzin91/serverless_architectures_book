@@ -21,6 +21,7 @@ var userController = {
   init: function(config) {
     var that = this;
 
+    console.log('here');
     this.uiElements.loginButton = $('#auth0-login');
     this.uiElements.logoutButton = $('#auth0-logout');
     this.uiElements.profileButton = $('#user-profile');
@@ -67,6 +68,7 @@ var userController = {
     var that = this;
 
     this.uiElements.loginButton.click(function(e) {
+      console.log('clicked login')
       var params = {
         authParams: {
           scope: 'openid email user_metadata picture'
@@ -77,6 +79,7 @@ var userController = {
         if (err) {
           // Error callback
           alert('There was an error');
+          console.log(err)
         } else {
           // Save the JWT token.
           localStorage.setItem('userToken', token);

@@ -1,7 +1,7 @@
 var configConstants = {
 	auth0: {
-		domain: 'AUTH0-DOMAIN',
-		clientId: 'AUTH0-CLIENTID'
+		domain: 'tesseract42.auth0.com',
+		clientId: 'J03L3UvB4s9sR2jOnU0yXldyWVstGqCB'
 	},
   apiBaseUrl: 'https://API-GATEWAY-URL/dev'
 };
