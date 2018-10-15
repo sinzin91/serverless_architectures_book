@@ -26,13 +26,16 @@ var userController = {
         auth: {
           responseType: 'id_token token',
           params: {
-            scope: config.auth0.scope,
-            audience: config.auth0.audience,
+            scope: "openid profile email",
+            audience: "https://tesseract42.auth0.com/api/v2/",
             redirectUrl: "",
-            responseType: "token"
+            responseType: "token id_token"
           }
         }
       }); // params set in config.js
+      this.data.auth0Lock.on("authorization_error", function(authResult){
+        console.log(authResult);
+      });
       this.data.auth0Lock.on("authenticated", function (authResult) {
           console.log("authenticated: ", authResult);
           that.retrieveProfileData(authResult.accessToken);
@@ -108,6 +111,7 @@ var userController = {
           $.get(url, function (data, status) {
               $('#user-profile-raw-json').text(JSON.stringify(data, null, 2));
               $('#user-profile-modal').modal();
+              alert(JSON.stringify(data));
           })
       });
   }
