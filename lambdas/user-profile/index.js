@@ -11,7 +11,8 @@ exports.handler = function(event, context, callback){
 
     var token = event.authToken.split(' ')[1];
 
-    jwt.verify(token, process.env.AUTH0_SECRET, function(err, decoded){
+    var secretBuffer = new Buffer(process.env.AUTH0_SECRET, "base64");
+    jwt.verify(token, secretBuffer, function(err, decoded){
     	if(err){
         console.log('Failed jwt verification: ', err, 'auth: ', event.authToken);
         console.log(decoded)
